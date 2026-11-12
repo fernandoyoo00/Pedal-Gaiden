@@ -1,4 +1,6 @@
 # Pedal Gaiden 🚴‍♂️🥷
+<img width="1280" height="716" alt="Screenshot 2026-11-11 at 2 17 47 AM" src="https://github.com/user-attachments/assets/3d38e68a-c4e5-4719-9c99-bd0a9943e3de" />
+
 
 **Pedal Gaiden** é um protótipo jogável de jogo sério 2D, desenvolvido em **Java com libGDX**, que combina ciclismo, coleta seletiva e uma temática inspirada no Japão. O personagem é um ninja ciclista cuja velocidade acompanha a cadência de pedalada (RPM). O projeto explora o uso de sensores IoT em experiências interativas voltadas à atividade física.
 
