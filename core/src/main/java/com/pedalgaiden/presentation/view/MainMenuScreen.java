@@ -1,0 +1,154 @@
+package com.pedalgaiden.presentation.view;
+
+import com.pedalgaiden.GameServices;
+import com.pedalgaiden.presentation.viewmodel.MenuViewModel;
+
+import com.badlogic.gdx.*;
+import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.g2d.*;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+
+/** Main menu built with the REAL PedalGaiden assets; no flattened screenshot. */
+public final class MainMenuScreen extends ScreenAdapter {
+    private static final float W = 1280, H = 720;
+    private static final float MENU_X = 420, MENU_WIDTH = 440, MENU_HEIGHT = 54;
+    private static final float MENU_TOP_Y = 320, MENU_SPACING = 60;
+    private static final String[] ICON_FILES = {
+            "ui_icon_play.png", "ui_icon_instructions.png",
+            "ui_icon_settings.png", "ui_icon_credits.png"
+    };
+    private final Game game;
+    private final GameServices services;
+    private final MenuViewModel viewModel;
+    private final FitViewport viewport = new FitViewport(W, H);
+    private final SpriteBatch batch = new SpriteBatch();
+    private final ShapeRenderer shapes = new ShapeRenderer();
+    private final BitmapFont font = new BitmapFont();
+    private final GlyphLayout layout = new GlyphLayout();
+    private final Vector3 mouse = new Vector3();
+    private Texture background;
+    private Texture logo;
+    private final Texture[] menuIcons = new Texture[ICON_FILES.length];
+
+    public MainMenuScreen(Game game,GameServices services) {
+        this.game = game;
+        this.services=services;
+        viewModel=new MenuViewModel(services.audio());
+        background = texture("backgrounds/fuji.png");
+        logo = texture("backgrounds/pedal_gaiden_logo.png");
+        for (int i = 0; i < ICON_FILES.length; i++) {
+            menuIcons[i] = texture("menu/pedalgaiden_menu_icons/" + ICON_FILES[i]);
+        }
+        font.getRegion().getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+    }
+    private Texture texture(String path) {
+        Texture t = new Texture(Gdx.files.internal(path));
+        t.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        return t;
+    }
+    @Override public void show() {
+        viewModel.show();
+        Gdx.input.setInputProcessor(new InputAdapter() {
+            @Override public boolean keyDown(int key) {
+                if (key == Input.Keys.DOWN || key == Input.Keys.S) viewModel.move(1);
+                else if (key == Input.Keys.UP || key == Input.Keys.W) viewModel.move(-1);
+                else if (key == Input.Keys.ENTER || key == Input.Keys.SPACE) activate();
+                else return false;
+                return true;
+            }
+            @Override public boolean mouseMoved(int x, int y) {
+                int index = optionAt(x, y);
+                if (index >= 0) viewModel.select(index);
+                return false;
+            }
+            @Override public boolean touchDown(int x, int y, int pointer, int button) {
+                int index = optionAt(x, y);
+                if (index < 0) return false;
+                viewModel.select(index);
+                activate();
+                return true;
+            }
+        });
+    }
+    private int optionAt(int sx, int sy) {
+        mouse.set(sx, sy, 0);
+        viewport.unproject(mouse);
+        for (int i = 0; i < viewModel.optionCount(); i++) {
+            float y = MENU_TOP_Y - i * MENU_SPACING;
+            if (mouse.x >= MENU_X && mouse.x <= MENU_X + MENU_WIDTH && mouse.y >= y && mouse.y <= y + MENU_HEIGHT) return i;
+        }
+        return -1;
+    }
+    private void activate() {
+        switch(viewModel.activate()){
+            case PLAY -> {game.setScreen(new PedalGaidenScreen(game,services,true));dispose();}
+            case INSTRUCTIONS -> {game.setScreen(new PedalGaidenScreen(game,services,false));dispose();}
+            case NONE -> {}
+        }
+    }
+    private void rect(float x,float y,float w,float h,Color c) {
+        shapes.setColor(c); shapes.rect(x,y,w,h);
+    }
+    private void text(String s,float cx,float baseline,float scale,Color color) {
+        font.getData().setScale(scale);
+        layout.setText(font,s);
+        font.setColor(color);
+        font.draw(batch,s,cx-layout.width/2,baseline);
+    }
+    private void menuLabel(String s,float cx,float baseline,float scale,Color color) {
+        font.getData().setScale(scale);
+        layout.setText(font,s);
+        font.setColor(color);
+        float left=cx-(layout.width+1)/2;
+        font.draw(batch,s,left,baseline);
+        font.draw(batch,s,left+1,baseline);
+    }
+    @Override public void render(float delta) {
+        Gdx.gl.glClearColor(0.02f,0.08f,0.15f,1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        viewport.apply();
+        batch.setProjectionMatrix(viewport.getCamera().combined);
+        shapes.setProjectionMatrix(viewport.getCamera().combined);
+        batch.begin();
+        batch.draw(background,0,0,W,H);
+        batch.end();
+
+        shapes.begin(ShapeRenderer.ShapeType.Filled);
+        float menuBottom = MENU_TOP_Y - (viewModel.optionCount() - 1) * MENU_SPACING;
+        float menuTop = MENU_TOP_Y + MENU_HEIGHT;
+        float menuPadding = 10;
+        rect(MENU_X - menuPadding, menuBottom - menuPadding,
+            MENU_WIDTH + menuPadding * 2, menuTop - menuBottom + menuPadding * 2,
+            new Color(0.008f, 0.035f, 0.09f, 0.84f));
+        for(int i=0;i<viewModel.optionCount();i++) {
+            float y=MENU_TOP_Y-i*MENU_SPACING;
+            boolean active=i==viewModel.selected();
+            Color fill=active?new Color(0.13f,0.105f,0.025f,0.98f):new Color(0.008f,0.035f,0.09f,0.94f);
+            rect(MENU_X,y,MENU_WIDTH,MENU_HEIGHT,fill);
+        }
+        shapes.end();
+
+        batch.begin();
+        for(int i=0;i<viewModel.optionCount();i++) {
+            float y=MENU_TOP_Y-i*MENU_SPACING;
+            batch.draw(menuIcons[i],MENU_X+22,y+9,36,36);
+            menuLabel(viewModel.option(i),MENU_X+MENU_WIDTH/2+18,y+MENU_HEIGHT/2+9,1.7f,i==viewModel.selected()?Color.GOLD:Color.WHITE);
+        }
+        batch.draw(logo,400,400,480,320);
+        text("Fernando Yoo    Guilherme Dias",640,44,1.1f,Color.WHITE);
+        text("Erik Yutaka",640,23,1.1f,Color.WHITE);
+        if(!viewModel.notice().isEmpty()) text(viewModel.notice(),640,95,1.1f,Color.YELLOW);
+        batch.end();
+    }
+    @Override public void resize(int width,int height) { viewport.update(width,height,true); }
+    @Override public void hide() { Gdx.input.setInputProcessor(null); }
+    @Override public void pause() { viewModel.pause(); }
+    @Override public void resume() { viewModel.show(); }
+    @Override public void dispose() {
+        background.dispose(); logo.dispose();
+        for (Texture icon : menuIcons) icon.dispose();
+        font.dispose(); batch.dispose(); shapes.dispose();
+    }
+}

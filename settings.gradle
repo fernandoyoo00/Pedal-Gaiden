@@ -1,2 +1,2 @@
 rootProject.name = 'PedalGaiden'
-include 'core', 'lwjgl3'
+include 'domain', 'core', 'lwjgl3'

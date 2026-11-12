@@ -1,1 +1,12 @@
-dependencies { implementation 'com.badlogicgames.gdx:gdx:1.13.5' }
+dependencies {
+    implementation project(':domain')
+    implementation 'com.badlogicgames.gdx:gdx:1.13.5'
+}
+
+tasks.register('gameplayRegressionTest', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.pedalgaiden.GameplayRegressionTest'
+    workingDir = rootProject.file('assets')
+}
+tasks.named('check') { dependsOn gameplayRegressionTest }
