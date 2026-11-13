@@ -194,7 +194,3 @@ Esses testes verificam cálculos de RPM, parada/retomada, retorno dos contadores
 - Erik Yutaka Takara
 - Fernando Seong Jae Yoo
 - Guilherme Silva Dias
-
-## Repositório
-
-Este README acompanha o código-fonte. Para entregas acadêmicas, inclua a URL do repositório e as instruções de acesso no artigo ou na documentação de submissão.
